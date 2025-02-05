@@ -1,0 +1,6 @@
+add about
+add education
+add favourites
+add skill
+add utilities(equation solver, chemical balance)
+add project (gomoku ai)
