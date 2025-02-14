@@ -7,7 +7,7 @@ const ChemicalBalancer = () => {
   const [equation, setEquation] = useState('');
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
-  console.log(result)
+  // console.log(result)
   const handleBalance = () => {
     if (!equation.trim()) {
       setError('Vui lòng nhập phương trình hóa học');
