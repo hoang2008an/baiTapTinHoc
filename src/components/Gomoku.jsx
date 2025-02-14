@@ -229,7 +229,7 @@ ${boardString}`;
     // Đảo ngược phe của người chơi: nếu đã được đặt, chuyển đổi; nếu chưa, mặc định là "X".
     setHumanSide(prev => (prev ? (prev === "X" ? "O" : "X") : "X"));
     // Đảo ngược lượt hiện tại.
-    setCurrentPlayer(cp => (cp === "X" ? "O" : "X"));
+    // setCurrentPlayer(cp => (cp === "X" ? "O" : "X"));
   };
 
   // --- Đặt lại trò chơi.
