@@ -1,0 +1,194 @@
+---
+import BaseHead from "../../components/BaseHead.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import { SITE_TITLE, SITE_DESCRIPTION } from "../../consts";
+import { getCollection } from "astro:content";
+import FormattedDate from "../../components/FormattedDate.astro";
+
+const posts = [{
+    title:"Giải phương trình",
+    description:"Giải phương trình bậc 1, 2, 3, 4 nhanh chóng và chính xác",
+    icon:'bx bx-calculator',
+    link:"equation_solver"
+},{
+    title:"Giải hệ phương trình",
+    description:"Giải hệ phương trình với số ẩn tùy ý ",
+    icon:'mdi mdi-matrix',
+    link:"system_solver"
+},{
+    title:"Cân bằng hóa học",
+    description:'Cân bằng các phương trình hóa học phức tạp và chính xác',
+    icon:'bx bx-vial',
+    link:"chemical_equation_balancer"
+}]
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/7.2.96/css/materialdesignicons.min.css' rel='stylesheet'>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+      main {
+        width: 960px;
+
+      }
+      a{
+        text-decoration: none;;
+      }
+      ul {
+        display: flex;
+        flex-wrap: wrap;
+
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+      }
+      ul li * {
+        text-decoration: none;
+        transition: 0.2s ease;
+      }
+      /* ul li:first-child {
+        width: 100%;
+        margin-bottom: 1rem;
+        text-align: center;
+      }
+      ul li:first-child img {
+        width: 100%;
+      }
+      ul li:first-child .title {
+        font-size: 2.369rem; */
+      /* } */
+      /* ul li img {
+        margin-bottom: 0.5rem;
+        border-radius: 12px;
+      }
+      ul li a {
+        display: block;
+      } */
+      .title {
+        margin: 0;
+        color: rgb(var(--black));
+        line-height: 1;
+      }
+      .date {
+        margin: 0;
+        color: rgb(var(--gray));
+      }
+      /* ul li a:hover h4,
+      ul li a:hover .date {
+        color: rgb(var(--accent));
+      }
+      ul a:hover img {
+        box-shadow: var(--box-shadow);
+      }
+      @media (max-width: 720px) {
+        ul {
+          gap: 0.5em;
+        }
+        ul li {
+          width: 100%;
+          text-align: center;
+        }
+        ul li:first-child {
+          margin-bottom: 0;
+        }
+        ul li:first-child .title {
+          font-size: 1.563em;
+        } */
+      /* } */
+      .feature-box {
+            display: flex;
+            align-items: center;
+            background-color: white;
+            background: linear-gradient(90deg, #ffffff, #eeeeee); /* Gradient background */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            width: 100%;
+            max-width: 1200px;
+            
+            transition: transform 0.3s ease;
+        }
+
+        .feature-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+        }
+
+        .icon-container {
+            margin-right: 20px;
+            min-width: 50px;
+        }
+
+        .icon-container i {
+            font-size: 48px;
+            margin-bottom: 10px;
+            color:black
+        }
+
+        .text-container {
+            flex-grow: 1;
+        }
+
+        .feature-title {
+            font-weight: 700;
+            color: #2d3436;
+            margin: 0 0 5px 0;
+            font-size: 1.2rem;
+        }
+
+        .feature-description {
+            color: #636e72;
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        /* Optional: Add responsive behavior */
+        @media (max-width: 720px) {
+            .feature-box {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .icon-container {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+  </head>
+  <body>
+    <Header />
+    <main>
+      <center style="font-size:xx-large; font-weight: bold;">
+        Tính năng
+      </center>
+      <section>
+        <ul>
+          {
+            posts.map((post) => (
+
+              <a class="feature-box"  href={"/utility/"+post.link}>
+                <div class="icon-container">
+                <i class={post.icon}></i>
+            </div>
+            <div class="text-container">
+            <h3 class="feature-title">{post.title}</h3>
+            <p class="feature-description">
+                {post.description}
+            </p>
+             </div>
+              </a>
+
+            ))}
+        </ul>
+      </section>
+    </main>
+    <Footer />
+  </body></html
+>
