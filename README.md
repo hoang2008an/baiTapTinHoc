@@ -1,4 +1,13 @@
-# Astro Starter Kit: Blog
+# Bài tập tin học
+[Website này](https://hoang2008.netlify.app) là bài tập cho môn tin học của lớp 11A1 Toán.
+Tính năng:
+- Thông tin cá nhân
+- Review một số sở thích 
+- Một số công cụ trong giải bài tập
+- Cờ caro:))
+
+Các công nghệ có sử dụng: Astro, Tailwind, React, Bun
+<!-- # Astro Starter Kit: Blog
 
 ```sh
 npm create astro@latest -- --template blog
@@ -65,4 +74,4 @@ Check out [our documentation](https://docs.astro.build) or jump into our [Discor
 
 ## Credit
 
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
+This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/). -->
