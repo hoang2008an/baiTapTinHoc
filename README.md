@@ -1,5 +1,8 @@
 # Bài tập tin học
 [Website này](https://hoang2008.netlify.app) là bài tập cho môn tin học của lớp 11A1 Toán.
+
+Project được viết toàn bộ bởi em, Bùi Việt Hoàng cùng với các LLM như ChatGPT o3-mini, Claude 3.5 Sonnet, Google AI Studio(Gemini experimental 1206, Flash Thinking)
+**Theme**: [Astro Starter Kit: Blog](https://vercel.com/templates/astro/astro-blog)
 Tính năng:
 - Thông tin cá nhân
 - Review một số sở thích 
