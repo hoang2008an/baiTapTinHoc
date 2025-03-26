@@ -8,7 +8,7 @@ const GomokuGame = () => {
   // --- QUAN TRỌNG: Thay thế bằng API Key của bạn ---
   // --- KHÔNG commit key này lên Git công khai ---
   const GEMINI_API_KEY = "AIzaSyCvSNKbFBHppw0p_Wet3jjz-GkdaGmvNaU"; // <<< THAY THẾ KEY CỦA BẠN VÀO ĐÂY
-  const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-exp-03-25:generateContent?key=${GEMINI_API_KEY}`;
+  const GEMINI_API_URL = `"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-exp-03-25:generateContent?key=AIzaSyCvSNKbFBHppw0p_Wet3jjz-GkdaGmvNaU"`;
   // Sử dụng model flash cho tốc độ nhanh hơn, hoặc gemini-1.5-pro-latest cho khả năng mạnh hơn
 
   // Tạo bàn cờ rỗng.
@@ -167,19 +167,20 @@ KHÔNG thêm bất kỳ giải thích, lời chào, hay văn bản nào khác ng
           signal: controller.signal, // Gắn signal vào yêu cầu fetch
           body: JSON.stringify({
             contents: [{ parts: [{ text: promptText }] }],
-            generationConfig: {
-              // responseMimeType: "application/json", // Thử bật nếu model hỗ trợ
-              temperature: 0.6, // Giảm nhiệt độ để AI ít "sáng tạo" và đi nước chắc chắn hơn
-              maxOutputTokens: 100, // Giới hạn token trả về
-              // candidateCount: 1 // Chỉ cần 1 ứng viên tốt nhất
-            },
-             safetySettings: [ // Cấu hình an toàn để tránh bị block oan
-              { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-              { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-              { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-              { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-            ],
-          }),
+            // generationConfig: {
+            //   // responseMimeType: "application/json", // Thử bật nếu model hỗ trợ
+            //   temperature: 0.6, // Giảm nhiệt độ để AI ít "sáng tạo" và đi nước chắc chắn hơn
+            //   maxOutputTokens: 100, // Giới hạn token trả về
+            //   // candidateCount: 1 // Chỉ cần 1 ứng viên tốt nhất
+            // },
+            //  safetySettings: [ // Cấu hình an toàn để tránh bị block oan
+            //   { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+            //   { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+            //   { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+            //   { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+            // ],
+          }
+        ),
         });
 
         if (controller.signal.aborted) {
