@@ -8,7 +8,7 @@ const GomokuGame = () => {
   // --- QUAN TRỌNG: Thay thế bằng API Key của bạn ---
   // --- KHÔNG commit key này lên Git công khai ---
   const GEMINI_API_KEY = "AIzaSyCvSNKbFBHppw0p_Wet3jjz-GkdaGmvNaU"; // <<< THAY THẾ KEY CỦA BẠN VÀO ĐÂY
-  const GEMINI_API_URL = `"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-exp-03-25:generateContent?key=AIzaSyCvSNKbFBHppw0p_Wet3jjz-GkdaGmvNaU"`;
+  const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-exp-03-25:generateContent?key=AIzaSyCvSNKbFBHppw0p_Wet3jjz-GkdaGmvNaU";
   // Sử dụng model flash cho tốc độ nhanh hơn, hoặc gemini-1.5-pro-latest cho khả năng mạnh hơn
 
   // Tạo bàn cờ rỗng.
