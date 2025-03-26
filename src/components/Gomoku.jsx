@@ -120,7 +120,7 @@ ${boardString}`;
         aiAbortControllerRef.current = controller;
 
         const response = await fetch(
-          "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-thinking-exp-01-21:generateContent?key=AIzaSyCvSNKbFBHppw0p_Wet3jjz-GkdaGmvNaU",
+          "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-exp-03-25:generateContent?key=AIzaSyCvSNKbFBHppw0p_Wet3jjz-GkdaGmvNaU",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
