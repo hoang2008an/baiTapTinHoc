@@ -490,7 +490,7 @@ KHÔNG thêm bất kỳ giải thích, lời chào, hay văn bản nào khác ng
           {/* Bàn cờ */}
           <div className={`flex justify-center transition-opacity duration-300 ${loadingAI ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
             <div
-             className="grid gap-0.5 bg-gray-400 p-1 rounded shadow-md"
+             className="grid gap-0.5 bg-gray-400 p-1 rounded shadow-md w-full max-w-md md:max-w-lg"
              style={{ gridTemplateColumns: `repeat(${boardSize}, minmax(0, 1fr))` }} // CSS Grid chuẩn
              >
               {board.map((row, i) =>
