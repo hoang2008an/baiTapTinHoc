@@ -6,116 +6,85 @@ const GomokuGame = () => {
   const winLength = 5;
   const maxRetries = 5;
   // --- QUAN TRỌNG: Thay thế bằng API Key của bạn ---
-  // --- KHÔNG commit key này lên Git công khai ---
   const GEMINI_API_KEY = "AIzaSyCvSNKbFBHppw0p_Wet3jjz-GkdaGmvNaU"; // <<< THAY THẾ KEY CỦA BẠN VÀO ĐÂY
   const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-exp-03-25:generateContent?key=AIzaSyCvSNKbFBHppw0p_Wet3jjz-GkdaGmvNaU";
-  // Sử dụng model flash cho tốc độ nhanh hơn, hoặc gemini-1.5-pro-latest cho khả năng mạnh hơn
 
-  // Tạo bàn cờ rỗng.
   const createEmptyBoard = () =>
     Array(boardSize)
       .fill(null)
       .map(() => Array(boardSize).fill(null));
 
-  // Trạng thái trò chơi.
   const [board, setBoard] = useState(createEmptyBoard());
-  const [currentPlayer, setCurrentPlayer] = useState(null); // Bắt đầu là null cho đến khi chọn phe
+  const [currentPlayer, setCurrentPlayer] = useState(null);
   const [winner, setWinner] = useState(null);
   const [aiEnabled, setAiEnabled] = useState(false);
   const [loadingAI, setLoadingAI] = useState(false);
-  const [humanSide, setHumanSide] = useState(null); // 'X' hoặc 'O'
-  const [showSideSelection, setShowSideSelection] = useState(false); // Hiển thị khi bật AI và chưa chọn phe
-  const [isDraw, setIsDraw] = useState(false); // Trạng thái hòa cờ
+  const [humanSide, setHumanSide] = useState(null);
+  const [showSideSelection, setShowSideSelection] = useState(false);
+  const [isDraw, setIsDraw] = useState(false);
 
-  // Ref để lưu AbortController cho yêu cầu AI hiện tại.
   const aiAbortControllerRef = useRef(null);
 
-  // --- Kiểm tra xem nước đi của người chơi tại (row, col) có thắng không.
   const checkWinner = (currentBoard, row, col, player) => {
-    const directions = [
-      [0, 1],   // ngang
-      [1, 0],   // dọc
-      [1, 1],   // chéo chính
-      [1, -1],  // chéo phụ
-    ];
+    const directions = [ [0, 1], [1, 0], [1, 1], [1, -1] ];
     for (let [dx, dy] of directions) {
       let count = 1;
-      // Kiểm tra về phía trước.
       for (let i = 1; i < winLength; i++) {
-        const r = row + dx * i;
-        const c = col + dy * i;
-        if (r >= 0 && r < boardSize && c >= 0 && c < boardSize && currentBoard[r][c] === player) {
-          count++;
-        } else {
-          break; // Ngắt nếu không liên tục
-        }
+        const r = row + dx * i; const c = col + dy * i;
+        if (r >= 0 && r < boardSize && c >= 0 && c < boardSize && currentBoard[r][c] === player) count++; else break;
       }
-      // Kiểm tra về phía sau.
       for (let i = 1; i < winLength; i++) {
-        const r = row - dx * i;
-        const c = col - dy * i;
-        if (r >= 0 && r < boardSize && c >= 0 && c < boardSize && currentBoard[r][c] === player) {
-          count++;
-        } else {
-          break; // Ngắt nếu không liên tục
-        }
+        const r = row - dx * i; const c = col - dy * i;
+        if (r >= 0 && r < boardSize && c >= 0 && c < boardSize && currentBoard[r][c] === player) count++; else break;
       }
       if (count >= winLength) return true;
     }
     return false;
   };
 
-  // --- Kiểm tra hòa cờ
   const checkDraw = (currentBoard) => {
-    // Hòa khi tất cả các ô đã được đi và không có người thắng
     return currentBoard.every(row => row.every(cell => cell !== null));
   };
 
-  // --- Xử lý khi người dùng nhấp vào ô.
   const handleClick = (row, col) => {
-    // Không cho phép đi khi: đã có người thắng, ô đã được đánh, đang chờ AI, chưa chọn phe (ở chế độ AI)
     if (winner || isDraw || board[row][col] || loadingAI || (aiEnabled && !humanSide)) return;
-    // Ở chế độ AI, chỉ cho phép di chuyển khi đến lượt người
-    if (aiEnabled && humanSide && currentPlayer !== humanSide) return;
+    if (aiEnabled && humanSide && currentPlayer !== humanSide) return; // Chỉ người chơi mới được click khi đến lượt
 
     const newBoard = board.map((r, i) =>
       i === row ? r.map((cell, j) => (j === col ? currentPlayer : cell)) : r
     );
-    setBoard(newBoard);
+    setBoard(newBoard); // Cập nhật bàn cờ ngay
 
     if (checkWinner(newBoard, row, col, currentPlayer)) {
       setWinner(currentPlayer);
-      return; // Kết thúc lượt nếu thắng
+      return;
     }
 
     if (checkDraw(newBoard)) {
         setIsDraw(true);
-        return; // Kết thúc lượt nếu hòa
+        return;
     }
 
-    // Đổi lượt.
+    // Đổi lượt ngay sau khi người chơi đi (trước khi gọi AI)
     const nextPlayer = currentPlayer === 'X' ? 'O' : 'X';
     setCurrentPlayer(nextPlayer);
-    // Nếu đang chơi với AI và đến lượt AI, gọi AI đi
-    if (aiEnabled && humanSide && nextPlayer !== humanSide) {
-      // Sử dụng setTimeout nhỏ để đảm bảo state `currentPlayer` cập nhật trước khi gọi AI
-      // và cho phép re-render giao diện (hiển thị nước đi của người chơi)
-      setTimeout(() => getAIMove(newBoard, nextPlayer), 100);
-    }
+
+    // Không gọi AI trực tiếp từ đây nữa, useEffect sẽ xử lý
   };
 
-  // --- Lấy nước đi từ AI với cơ chế thử lại. (ĐÃ ĐƯỢC CẬP NHẬT)
   const getAIMove = async (currentBoard, aiPlayer) => {
-    if (!aiEnabled || winner || isDraw) return; // Không gọi AI nếu game đã kết thúc hoặc AI bị tắt
+     // Guard đầu tiên: Nếu AI bị tắt thì không làm gì cả
+    if (!aiEnabled) {
+        console.log("getAIMove called but AI is disabled.");
+        setLoadingAI(false); // Đảm bảo tắt loading nếu lỡ bật
+        return;
+    }
+    // Chỉ bắt đầu loading nếu AI thực sự được bật
     setLoadingAI(true);
 
     const yourPiece = aiPlayer;
     const opponentPiece = aiPlayer === 'X' ? 'O' : 'X';
-
-    const boardString = currentBoard
-      .map((row) => row.map((cell) => (cell ? cell : '.')).join(' '))
-      .join('\n');
-
+    const boardString = currentBoard.map(row => row.map(cell => cell ? cell : '.').join(' ')).join('\n');
     const promptText = `Bạn là một AI chơi Gomoku (Cờ Caro) trên bàn cờ ${boardSize}x${boardSize}. Mục tiêu là đạt được ${winLength} quân cờ liên tiếp (ngang, dọc, hoặc chéo).
 Bàn cờ hiện tại được biểu diễn dưới đây, trong đó:
 - '.' đại diện cho ô trống.
@@ -145,249 +114,220 @@ KHÔNG thêm bất kỳ giải thích, lời chào, hay văn bản nào khác ng
     let validMoveFound = false;
     let move = null;
 
-    // Hủy yêu cầu trước đó nếu có
     if (aiAbortControllerRef.current) {
-        aiAbortControllerRef.current.abort();
-        console.log("Đã hủy yêu cầu AI trước đó.");
+        aiAbortControllerRef.current.abort(); // Hủy cái cũ nếu có
     }
-    // Tạo AbortController mới cho yêu cầu này.
     const controller = new AbortController();
     aiAbortControllerRef.current = controller;
 
-    while (attempt < maxRetries && !validMoveFound && aiEnabled) { // Kiểm tra aiEnabled trong vòng lặp
-      attempt++;
-      console.log(`AI Move Attempt: ${attempt}/${maxRetries}`);
-
-      try {
-        console.log("Đang gửi prompt cho AI:", promptText);
-
-        const response = await fetch(GEMINI_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: controller.signal, // Gắn signal vào yêu cầu fetch
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: promptText }] }],
-            // generationConfig: {
-            //   // responseMimeType: "application/json", // Thử bật nếu model hỗ trợ
-            //   temperature: 0.6, // Giảm nhiệt độ để AI ít "sáng tạo" và đi nước chắc chắn hơn
-            //   maxOutputTokens: 100, // Giới hạn token trả về
-            //   // candidateCount: 1 // Chỉ cần 1 ứng viên tốt nhất
-            // },
-            //  safetySettings: [ // Cấu hình an toàn để tránh bị block oan
-            //   { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-            //   { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-            //   { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-            //   { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-            // ],
-          }
-        ),
-        });
-
-        if (controller.signal.aborted) {
-            console.log("Yêu cầu AI đã bị hủy trước khi nhận phản hồi.");
-            // Không cần setLoadingAI(false) ở đây vì useEffect cleanup sẽ xử lý
-            return; // Thoát hàm sớm
-        }
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Lỗi API:", response.status, response.statusText, errorData);
-          // Nếu lỗi do API key hoặc lỗi server thì có thể dừng sớm
-          if (response.status === 400 || response.status === 401 || response.status === 403 || response.status >= 500) {
-             console.error("Lỗi nghiêm trọng từ API, dừng thử lại.");
-             break; // Thoát vòng lặp while
-          }
-          continue; // Thử lại nếu là lỗi tạm thời
-        }
-
-        const data = await response.json();
-        console.log("Phản hồi thô từ AI:", JSON.stringify(data));
-
-        // Kiểm tra cấu trúc và lỗi safety ratings
-        if (data?.promptFeedback?.blockReason) {
-           console.error("Prompt bị chặn:", data.promptFeedback.blockReason, data.promptFeedback.safetyRatings);
-           continue; // Thử lại với hy vọng lần sau không bị chặn (hoặc cần điều chỉnh prompt/safetySettings)
-        }
-
-        const outputText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!outputText) {
-          console.error("Không có text trong phản hồi từ AI hoặc cấu trúc không đúng:", data);
-          continue;
-        }
-        console.log("Text nhận được từ AI:", outputText);
-
-        let jsonStr = outputText.replace(/```(json)?/gi, '').replace(/```/g, '').trim();
-        console.log("Chuỗi JSON sau khi làm sạch:", jsonStr);
-
-        let parsed;
-        try {
-          parsed = JSON.parse(jsonStr);
-        } catch (jsonError) {
-          console.error("Không thể phân tích JSON trực tiếp:", jsonStr, jsonError);
-          // Thử tìm JSON trong chuỗi nếu có văn bản thừa
-          const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            try {
-              parsed = JSON.parse(jsonMatch[0]);
-              console.log("Đã tìm và phân tích JSON từ chuỗi con:", parsed);
-            } catch (nestedJsonError) {
-              console.error("Vẫn lỗi khi phân tích JSON tìm được:", jsonMatch[0], nestedJsonError);
-              continue;
+    try { // Bọc toàn bộ vòng lặp trong try...finally để đảm bảo cleanup
+        while (attempt < maxRetries && !validMoveFound) {
+            // Guard trong vòng lặp: Kiểm tra AI có còn bật không trước mỗi lần thử
+            if (!aiEnabled || controller.signal.aborted) {
+                 console.log("AI disabled or request aborted during retry loop.");
+                 // Không cần set loading false ở đây vì finally sẽ làm
+                 return;
             }
-          } else {
-            console.error("Không tìm thấy chuỗi JSON hợp lệ trong phản hồi.");
-            continue;
-          }
-        }
+            attempt++;
+            console.log(`AI Move Attempt: ${attempt}/${maxRetries}`);
 
-        // Kiểm tra tính hợp lệ của nước đi RẤT QUAN TRỌNG
-        if (
-          parsed &&
-          typeof parsed.row === "number" &&
-          typeof parsed.col === "number" &&
-          parsed.row >= 0 &&
-          parsed.row < boardSize &&
-          parsed.col >= 0 &&
-          parsed.col < boardSize &&
-          !currentBoard[parsed.row][parsed.col] // *** Đảm bảo ô phải trống ***
-        ) {
-          move = { row: parsed.row, col: parsed.col };
-          validMoveFound = true;
-          console.log("Nước đi hợp lệ từ AI:", move);
+            try {
+                console.log("Đang gửi prompt cho AI:", promptText);
+                const response = await fetch(GEMINI_API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: promptText }] }],
+                    })
+                });
+
+                // -------- Guard quan trọng sau await fetch --------
+                if (!aiEnabled || controller.signal.aborted) {
+                    console.log("AI disabled or request aborted after fetch response.");
+                    // Không cần set loading false ở đây vì finally sẽ làm
+                    return;
+                }
+                // --------------------------------------------------
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Lỗi API:", response.status, response.statusText, errorData);
+                    if (response.status === 400 || response.status === 401 || response.status === 403 || response.status >= 500) {
+                        break;
+                    }
+                    continue;
+                }
+
+                const data = await response.json();
+                 // -------- Guard sau await response.json() --------
+                 if (!aiEnabled || controller.signal.aborted) {
+                    console.log("AI disabled or request aborted after parsing JSON.");
+                    return;
+                }
+                // --------------------------------------------------
+                console.log("Phản hồi thô từ AI:", JSON.stringify(data));
+
+                if (data?.promptFeedback?.blockReason) {
+                    console.error("Prompt bị chặn:", data.promptFeedback.blockReason);
+                    continue;
+                }
+                const outputText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                 if (!outputText) {
+                    console.error("Không có text trong phản hồi:", data);
+                    continue;
+                 }
+                console.log("Text nhận được:", outputText);
+
+                let jsonStr = outputText.replace(/```(json)?/gi, '').replace(/```/g, '').trim();
+                let parsed;
+                try {
+                    parsed = JSON.parse(jsonStr);
+                } catch (jsonError) {
+                    console.error("Lỗi parse JSON:", jsonStr, jsonError);
+                    const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        try { parsed = JSON.parse(jsonMatch[0]); } catch (e) { continue; }
+                    } else { continue; }
+                }
+
+                if ( parsed && typeof parsed.row === "number" && typeof parsed.col === "number" &&
+                     parsed.row >= 0 && parsed.row < boardSize && parsed.col >= 0 && parsed.col < boardSize &&
+                     !currentBoard[parsed.row][parsed.col] )
+                {
+                    move = { row: parsed.row, col: parsed.col };
+                    validMoveFound = true;
+                    console.log("Nước đi hợp lệ từ AI:", move);
+                } else {
+                    console.error("Nước đi không hợp lệ:", parsed, `Ô có giá trị: ${currentBoard[parsed?.row]?.[parsed?.col] ?? 'ngoài bàn cờ'}`);
+                    console.log("Board khi AI nhận:", boardString);
+                }
+
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.log("Fetch request cho AI đã bị hủy.");
+                    return; // Thoát khỏi hàm, finally sẽ xử lý loading
+                }
+                console.error("Lỗi fetch/xử lý AI lần", attempt, error);
+                if (attempt < maxRetries) {
+                    // Guard trước khi đợi:
+                    if (!aiEnabled || controller.signal.aborted) return;
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+        } // Kết thúc while
+
+        // -------- Guard cuối cùng trước khi cập nhật state --------
+        if (!aiEnabled) {
+            console.log("AI disabled before applying move.");
+            return; // Finally sẽ tắt loading
+        }
+        // -------------------------------------------------------
+
+        if (validMoveFound) {
+            const { row, col } = move;
+            // Tạo newBoard dựa trên currentBoard được truyền vào, không phải state board cũ
+            const newBoardAfterAIMove = currentBoard.map((r, i) =>
+                i === row ? r.map((cell, j) => (j === col ? aiPlayer : cell)) : r
+            );
+            setBoard(newBoardAfterAIMove); // Cập nhật state board chính thức
+
+            if (checkWinner(newBoardAfterAIMove, row, col, aiPlayer)) {
+                setWinner(aiPlayer);
+            } else if (checkDraw(newBoardAfterAIMove)) {
+                setIsDraw(true);
+            } else {
+                // Chỉ đổi lượt nếu không thắng/hòa
+                setCurrentPlayer(humanSide); // Sau khi AI đi, luôn là lượt của người
+            }
         } else {
-          console.error(
-            "Nước đi không hợp lệ từ AI:", parsed,
-            `Ô [${parsed?.row}, ${parsed?.col}] có giá trị: ${currentBoard[parsed?.row]?.[parsed?.col] ?? 'ngoài bàn cờ'}`
-          );
-          // Log lại boardString để đối chiếu
-          console.log("Trạng thái bàn cờ khi AI nhận được:", boardString);
+            console.error("Không nhận được nước đi hợp lệ từ AI sau", maxRetries, "lần thử.");
+            // Trả lượt lại cho người nếu AI bó tay
+             if (aiEnabled) { // Kiểm tra lại lần nữa cho chắc
+                setCurrentPlayer(humanSide);
+                alert("AI không thể tìm thấy nước đi hợp lệ. Lượt của bạn.");
+             }
         }
-      } catch (error) {
-        if (error.name === 'AbortError') {
-          console.log("Fetch request cho AI đã bị hủy.");
-          // Thoát vòng lặp và hàm nếu request bị hủy
-          setLoadingAI(false); // Đảm bảo tắt loading
-          return;
+    } finally {
+        // Đảm bảo controller được dọn dẹp và loading tắt đi
+        if (aiAbortControllerRef.current === controller) { // Chỉ clear ref nếu nó vẫn là controller của lần gọi này
+             aiAbortControllerRef.current = null;
         }
-        console.error("Lỗi trong quá trình fetch hoặc xử lý phản hồi AI lần thử", attempt, error);
-        // Thêm độ trễ nhỏ trước khi thử lại để tránh spam API khi có lỗi mạng tức thời
-        if (attempt < maxRetries) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      }
-    } // Kết thúc vòng lặp while
-
-    // Dọn dẹp AbortController sau khi vòng lặp kết thúc hoặc bị hủy
-    aiAbortControllerRef.current = null;
-
-    // Kiểm tra lại aiEnabled sau vòng lặp, phòng trường hợp AI bị tắt trong khi fetch
-    if (!aiEnabled) {
-        console.log("AI đã bị tắt trong quá trình lấy nước đi.");
         setLoadingAI(false);
-        return;
+        console.log("AI execution finished or aborted. Loading set to false.");
     }
-
-    if (!validMoveFound) {
-      console.error("Không nhận được nước đi hợp lệ từ AI sau", maxRetries, "lần thử.");
-      // Xử lý khi AI thất bại: có thể cho người chơi đi tiếp, thông báo lỗi, hoặc tự động thua
-      // Tạm thời chỉ tắt loading và cho người chơi đi tiếp
-      setCurrentPlayer(humanSide); // Trả lượt lại cho người chơi
-      setLoadingAI(false);
-      alert("AI không thể tìm thấy nước đi hợp lệ. Lượt của bạn."); // Thông báo cho người dùng
-      return;
-    }
-
-    // Thực hiện nước đi của AI
-    const { row, col } = move;
-    const newBoard = currentBoard.map((r, i) => // Sử dụng currentBoard thay vì state board cũ
-      i === row ? r.map((cell, j) => (j === col ? aiPlayer : cell)) : r
-    );
-    setBoard(newBoard); // Cập nhật state board chính thức
-
-    if (checkWinner(newBoard, row, col, aiPlayer)) {
-      setWinner(aiPlayer);
-    } else if (checkDraw(newBoard)) {
-      setIsDraw(true);
-    } else {
-      // Chỉ đổi lượt nếu không có người thắng hoặc hòa
-      setCurrentPlayer(humanSide); // Sau khi AI đi, luôn là lượt của người chơi
-    }
-    setLoadingAI(false);
   };
 
-
-  // --- Xử lý bật/tắt AI ---
+  // --- Toggle AI: Abort ngay khi tắt ---
   const handleAIToggle = (checked) => {
+    if (!checked && aiAbortControllerRef.current) {
+      console.log("Tắt AI, hủy yêu cầu AI đang chạy...");
+      aiAbortControllerRef.current.abort();
+      aiAbortControllerRef.current = null;
+      setLoadingAI(false); // Đảm bảo tắt loading ngay lập tức
+    }
     setAiEnabled(checked);
-    resetGame(checked); // Gọi reset game khi bật/tắt AI
+    resetGame(checked); // Reset game với trạng thái AI mới
   };
 
-  // --- Đặt lại trò chơi ---
-  const resetGame = (isAiCurrentlyEnabled = aiEnabled) => { // Nhận trạng thái AI hiện tại hoặc mới
+  const resetGame = (isAiCurrentlyEnabled) => {
     console.log("Resetting game. AI enabled:", isAiCurrentlyEnabled);
-    setBoard(createEmptyBoard());
-    setWinner(null);
-    setIsDraw(false);
-    setHumanSide(null); // Luôn reset phe người chơi
-    setCurrentPlayer(null); // Reset lượt đi, chờ chọn phe nếu là AI
-    setShowSideSelection(isAiCurrentlyEnabled); // Hiển thị chọn phe nếu AI đang bật
 
-    // Hủy yêu cầu AI đang chạy nếu có
+    // Hủy yêu cầu AI đang chạy (nếu có) khi reset
     if (aiAbortControllerRef.current) {
       aiAbortControllerRef.current.abort();
       aiAbortControllerRef.current = null;
-      console.log("Đã hủy yêu cầu AI khi reset game.");
     }
-    setLoadingAI(false); // Đảm bảo tắt loading
+    setLoadingAI(false); // Luôn tắt loading khi reset
 
-    // Nếu không bật AI, mặc định người chơi X đi trước
+    setBoard(createEmptyBoard());
+    setWinner(null);
+    setIsDraw(false);
+    setHumanSide(null);
+    setCurrentPlayer(null);
+    setShowSideSelection(isAiCurrentlyEnabled);
+
     if (!isAiCurrentlyEnabled) {
-       setCurrentPlayer('X');
-       setShowSideSelection(false); // Ẩn chọn phe
-       setHumanSide(null); // Không cần humanSide khi không có AI
+       setCurrentPlayer('X'); // Người chơi X đi trước khi không có AI
     }
   };
 
-  // --- Xử lý lựa chọn phe cho một ván mới ở chế độ AI ---
   const chooseSide = (side) => {
-    if (!aiEnabled) return; // Chỉ hoạt động khi AI bật
+    if (!aiEnabled) return;
     console.log("Choosing side:", side);
     setHumanSide(side);
     setCurrentPlayer('X'); // Luôn bắt đầu với lượt của X
-    setShowSideSelection(false); // Ẩn nút chọn phe
-
-    // Nếu người chơi chọn O, thì AI (đóng vai X) sẽ di chuyển ngay.
-    const aiPlayer = side === 'X' ? 'O' : 'X';
-    if (side === 'O') {
-      // AI đi trước (là X)
-      // Dùng setTimeout để đảm bảo state đã cập nhật và giao diện re-render
-      setTimeout(() => {
-          // Kiểm tra lại các điều kiện trước khi gọi AI
-          if (aiEnabled && humanSide === 'O' && currentPlayer === 'X' && !winner && !isDraw) {
-             getAIMove(board, 'X'); // Gọi AI đi với bàn cờ hiện tại (rỗng) và phe 'X'
-          } else {
-             console.warn("Điều kiện không hợp lệ để AI đi trước:", {aiEnabled, humanSide, currentPlayer, winner, isDraw});
-          }
-      }, 200); // Tăng nhẹ độ trễ để chắc chắn
-    }
+    setShowSideSelection(false);
+    // Không gọi AI từ đây, useEffect sẽ xử lý
   };
 
-   // --- Cleanup effect để hủy yêu cầu fetch khi component unmount hoặc AI bị tắt ---
+  // --- useEffect để gọi AI khi đến lượt ---
+  useEffect(() => {
+    // Điều kiện để AI đi: AI đang bật, đã chọn phe, đến lượt AI, game chưa kết thúc
+    const isAITurn = aiEnabled && humanSide && currentPlayer && currentPlayer !== humanSide && !winner && !isDraw;
+
+    if (isAITurn) {
+      console.log(`useEffect triggered: AI's turn (Player ${currentPlayer})`);
+      // Gọi AI với board hiện tại và quân cờ của AI (currentPlayer)
+      // Sử dụng một bản sao của board để tránh stale state tiềm ẩn nếu getAIMove mất nhiều thời gian
+      const boardSnapshot = board.map(row => [...row]);
+      getAIMove(boardSnapshot, currentPlayer);
+    }
+  }, [aiEnabled, humanSide, currentPlayer, winner, isDraw, board]); // Phụ thuộc vào các state này
+
+   // --- useEffect Cleanup cho unmount ---
    useEffect(() => {
-    // Trả về một hàm cleanup
     return () => {
       if (aiAbortControllerRef.current) {
-        console.log("Hủy yêu cầu AI do component unmount hoặc AI tắt.");
+        console.log("Hủy yêu cầu AI do component unmount.");
         aiAbortControllerRef.current.abort();
         aiAbortControllerRef.current = null;
-        // Đảm bảo tắt loading nếu đang loading khi bị hủy
-        setLoadingAI(false);
+        // Không cần setLoadingAI(false) ở đây vì component sắp unmount
       }
     };
-  }, [aiEnabled]); // Chạy lại effect này khi aiEnabled thay đổi
+  }, []); // Chỉ chạy khi unmount
 
-
-  // --- Render component ---
+  // --- Render component (Không thay đổi) ---
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
@@ -401,7 +341,6 @@ KHÔNG thêm bất kỳ giải thích, lời chào, hay văn bản nào khác ng
               Bàn cờ {boardSize}x{boardSize}, cần {winLength} quân liên tiếp để thắng.
               Thử sức với Gemini AI!
             </p>
-             {/* Hiển thị API Key Warning */}
              {GEMINI_API_KEY === "YOUR_GEMINI_API_KEY" && aiEnabled && (
                <p className="mt-2 text-sm text-red-600 font-semibold">
                  ⚠️ Vui lòng thay thế "YOUR_GEMINI_API_KEY" bằng API Key của bạn trong code để AI hoạt động!
@@ -424,7 +363,6 @@ KHÔNG thêm bất kỳ giải thích, lời chào, hay văn bản nào khác ng
               </span>
             </label>
 
-            {/* Chỉ hiển thị chọn phe khi AI bật và chưa chọn */}
             {aiEnabled && showSideSelection && (
               <div className="flex flex-col sm:flex-row gap-3 mt-2 sm:mt-0">
                  <span className="text-gray-700 font-medium mb-2 sm:mb-0 sm:mr-3">Bạn muốn chơi quân:</span>
@@ -445,7 +383,7 @@ KHÔNG thêm bất kỳ giải thích, lời chào, hay văn bản nào khác ng
           </div>
 
           {/* Trạng thái trò chơi */}
-          <div className="text-center h-10 flex items-center justify-center"> {/* Đảm bảo chiều cao cố định */}
+          <div className="text-center h-10 flex items-center justify-center">
             {winner ? (
               <strong className={`text-2xl font-bold ${winner === 'X' ? 'text-blue-700' : 'text-red-700'}`}>
                 🎉 Người chiến thắng: {winner} {aiEnabled && humanSide && winner !== humanSide ? "(Máy)" : ""} 🎉
@@ -473,7 +411,7 @@ KHÔNG thêm bất kỳ giải thích, lời chào, hay văn bản nào khác ng
                   </span>
                ) : (
                  <span className="text-lg text-gray-600">
-                     Sẵn sàng bắt đầu!
+                     {!aiEnabled ? 'X đi trước' : 'Sẵn sàng bắt đầu!'}
                  </span>
                )
             )}
@@ -492,7 +430,7 @@ KHÔNG thêm bất kỳ giải thích, lời chào, hay văn bản nào khác ng
           <div className={`flex justify-center transition-opacity duration-300 ${loadingAI ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
             <div
              className="grid gap-0.5 bg-gray-400 p-1 rounded shadow-md w-full max-w-md md:max-w-lg"
-             style={{ gridTemplateColumns: `repeat(${boardSize}, minmax(0, 1fr))` }} // CSS Grid chuẩn
+             style={{ gridTemplateColumns: `repeat(${boardSize}, minmax(0, 1fr))` }}
              >
               {board.map((row, i) =>
                 row.map((cell, j) => (
@@ -501,10 +439,10 @@ KHÔNG thêm bất kỳ giải thích, lời chào, hay văn bản nào khác ng
                     onClick={() => handleClick(i, j)}
                     className={`aspect-square border border-gray-300 flex items-center justify-center transition-colors duration-150
                       ${cell === 'X' ? 'bg-blue-100 text-blue-700' : cell === 'O' ? 'bg-red-100 text-red-700' : 'bg-white'}
-                      ${!cell && !winner && !isDraw && (!aiEnabled || (aiEnabled && currentPlayer === humanSide && !loadingAI)) // Điều kiện cho phép click
-                        ? 'cursor-pointer hover:bg-yellow-100' // Hover khi có thể click
-                        : 'cursor-default'} // Không cho click
-                       text-2xl sm:text-3xl font-bold rounded-sm // Tăng kích thước font và làm tròn nhẹ
+                      ${!cell && !winner && !isDraw && (!aiEnabled || (aiEnabled && currentPlayer === humanSide && !loadingAI))
+                        ? 'cursor-pointer hover:bg-yellow-100'
+                        : 'cursor-default'}
+                       text-2xl sm:text-3xl font-bold rounded-sm
                       `}
                     aria-label={`Ô ${i}, ${j}: ${cell || 'Trống'}`}
                   >
@@ -518,7 +456,7 @@ KHÔNG thêm bất kỳ giải thích, lời chào, hay văn bản nào khác ng
           {/* Nút Đặt lại */}
           <div className="flex justify-center pt-4">
             <button
-              onClick={() => resetGame()} // Gọi reset không cần tham số, nó sẽ tự lấy aiEnabled hiện tại
+              onClick={() => resetGame(aiEnabled)}
               className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-8 py-3 rounded-lg font-semibold transition duration-200 ease-in-out shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
             >
               Chơi lại
